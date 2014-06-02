@@ -5,13 +5,17 @@
 
 #define UNITS_IN_BLOCK           128lu
 #define PHYSICAL_BLOCKS          1000000lu /* total */
-#define SPARE_RATIO              0.25 /* Make sure {UNITS_IN_BLOCK, PHYSICAL_BLOCKS}*SPARE_RATIO are whole numbers */
+#define SPARE_RATIO              0.375 /* Make sure {UNITS_IN_BLOCK, PHYSICAL_BLOCKS}*SPARE_RATIO are whole numbers */
 #define SPARE_PHYSICAL_IN_BLOCKS ((unsigned long)(SPARE_RATIO * PHYSICAL_BLOCKS))
 #define USED_PHYSICAL_IN_BLOCKS  (PHYSICAL_BLOCKS - SPARE_PHYSICAL_IN_BLOCKS)
 #define USED_UNITS               (UNITS_IN_BLOCK * USED_PHYSICAL_IN_BLOCKS)
 
-#define INITIAL_BLOCKS_BY_USED   \
-    { [UNITS_IN_BLOCK - (unsigned long)(UNITS_IN_BLOCK*SPARE_RATIO)] = PHYSICAL_BLOCKS, }
+#define INITIAL_BLOCKS_BY_USED                                          \
+    {                                                                   \
+        /*[UNITS_IN_BLOCK - (unsigned long)(UNITS_IN_BLOCK*SPARE_RATIO)] = PHYSICAL_BLOCKS,*/ \
+        [0] = SPARE_PHYSICAL_IN_BLOCKS,                                 \
+        [UNITS_IN_BLOCK] = USED_PHYSICAL_IN_BLOCKS,                     \
+    }
 
 
 #define PERCENTAGE_DIV(x, y)     ((x) * 100 / (y))
@@ -94,7 +98,7 @@ int main()
     srandom(0);
     unsigned iter;
     for(iter = 0; ; iter++) {
-        if(0 == iter % (1<<20)) print_state(&state);
+        if(0 == iter % (1<<17)) print_state(&state);
 
         unsigned smallest_size;
         for(smallest_size = 0; ; smallest_size++) {
