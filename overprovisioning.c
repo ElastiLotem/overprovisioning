@@ -3,6 +3,14 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#if 0 // SANITY
+#define PRINT_ITERATION_INTERVAL     1
+#define ITER_STOP(iter)              (iter < 5)
+#else
+#define PRINT_ITERATION_INTERVAL     (1<<17)
+#define ITER_STOP(iter)
+#endif
+
 #define UNITS_IN_BLOCK           128lu
 #define PHYSICAL_BLOCKS          1000000lu /* total */
 #define SPARE_RATIO              0.375 /* Make sure {UNITS_IN_BLOCK, PHYSICAL_BLOCKS}*SPARE_RATIO are whole numbers */
@@ -100,8 +108,8 @@ int main()
 
     srandom(0);
     unsigned iter;
-    for(iter = 0; ; iter++) {
-        if(0 == iter % (1<<17)) print_state(&state);
+    for(iter = 0; ITER_STOP(iter); iter++) {
+        if(0 == iter % PRINT_ITERATION_INTERVAL) print_state(&state);
 
         unsigned smallest_size;
         for(smallest_size = 0; ; smallest_size++) {
