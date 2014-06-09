@@ -7,22 +7,28 @@
 #define PRINT_ITERATION_INTERVAL     1
 #define ITER_STOP(iter)              (iter < 5)
 #else
-#define PRINT_ITERATION_INTERVAL     (1<<17)
+#define PRINT_ITERATION_INTERVAL     (1<<22)
 #define ITER_STOP(iter)
 #endif
 
-#define UNITS_IN_BLOCK           128lu
-#define PHYSICAL_BLOCKS          1000000lu /* total */
-#define SPARE_RATIO              0.375 /* Make sure {UNITS_IN_BLOCK, PHYSICAL_BLOCKS}*SPARE_RATIO are whole numbers */
-#define SPARE_PHYSICAL_IN_BLOCKS ((unsigned long)(SPARE_RATIO * PHYSICAL_BLOCKS))
+#define FLASH_BITSHIFT               40
+#define DIRECT_BUCKET_SIZE_BITSHIFT  13
+
+#define DIRECT_CAPACITY_BITSHIFT     (FLASH_BITSHIFT-2)
+#define DIRECT_BUCKET_COUNT_BITSHIFT (DIRECT_CAPACITY_BITSHIFT - DIRECT_BUCKET_SIZE_BITSHIFT)
+
+#define AVG_SPARE_IN_BLOCK       1.09375
+#define UNITS_IN_BLOCK           8lu
+
+#define PHYSICAL_BLOCKS          (1lu << DIRECT_BUCKET_COUNT_BITSHIFT) /* total */
+#define SPARE_PHYSICAL_IN_BLOCKS ((unsigned long)(AVG_SPARE_IN_BLOCK * PHYSICAL_BLOCKS / UNITS_IN_BLOCK))
 #define USED_PHYSICAL_IN_BLOCKS  (PHYSICAL_BLOCKS - SPARE_PHYSICAL_IN_BLOCKS)
 #define USED_UNITS               (UNITS_IN_BLOCK * USED_PHYSICAL_IN_BLOCKS)
 
-#define INITIAL_BLOCKS_BY_USED                                          \
-    {                                                                   \
-        /*[UNITS_IN_BLOCK - (unsigned long)(UNITS_IN_BLOCK*SPARE_RATIO)] = PHYSICAL_BLOCKS,*/ \
-        [0] = SPARE_PHYSICAL_IN_BLOCKS,                                 \
-        [UNITS_IN_BLOCK] = USED_PHYSICAL_IN_BLOCKS,                     \
+#define INITIAL_BLOCKS_BY_USED                          \
+    {                                                   \
+        [UNITS_IN_BLOCK-1] = PHYSICAL_BLOCKS*(2-AVG_SPARE_IN_BLOCK), \
+        [UNITS_IN_BLOCK-2] = PHYSICAL_BLOCKS*(AVG_SPARE_IN_BLOCK-1), \
     }
 
 
@@ -102,9 +108,9 @@ int main()
     PRINT_VAR(PHYSICAL_BLOCKS);
     PRINT_VAR(USED_UNITS);
 
-    printf("Spare is %lu%% of physical address space (or %lu%% of logical)\n",
-           (unsigned long)(100ul * SPARE_RATIO),
-           PERCENTAGE_DIV(SPARE_PHYSICAL_IN_BLOCKS, USED_PHYSICAL_IN_BLOCKS));
+    /* printf("Spare is %lu%% of physical address space (or %lu%% of logical)\n", */
+    /*        (unsigned long)(100ul * SPARE_RATIO), */
+    /*        PERCENTAGE_DIV(SPARE_PHYSICAL_IN_BLOCKS, USED_PHYSICAL_IN_BLOCKS)); */
 
     srandom(0);
     unsigned iter;
