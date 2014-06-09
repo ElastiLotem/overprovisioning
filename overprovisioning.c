@@ -48,12 +48,14 @@ static void print_state(struct block_state *state)
     printf("Block freedom histogram\n");
     unsigned jump = UNITS_IN_BLOCK / 8;
     for(i = 0; i <= UNITS_IN_BLOCK; i+=jump) {
-        printf("---- \t");
+        /* 5 = 12 minus 7 dashes */
+        printf("%5s-------", "");
     }
     printf("\n");
 
     for(i = 0; i <= UNITS_IN_BLOCK; i+=jump) {
-        printf("%lu-%lu\t", i, MIN(UNITS_IN_BLOCK, i+jump-1));
+        /* 5 = 12 minus 3 minus 3 minus 1 dash */
+        printf("%5s%3lu-%3lu", "", i, MIN(UNITS_IN_BLOCK, i+jump-1));
     }
     printf("\n");
 
@@ -63,7 +65,8 @@ static void print_state(struct block_state *state)
         for(j = i; j <= MIN(UNITS_IN_BLOCK, i+jump-1); j++) {
             total += state->blocks_by_used[UNITS_IN_BLOCK-j];
         }
-        printf("%d\t", total);
+        /* 12 is the column width */
+        printf(" %11d", total);
     }
     printf("\n");
 
