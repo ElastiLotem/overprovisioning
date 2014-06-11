@@ -11,6 +11,8 @@
 #define ITER_STOP(iter)
 #endif
 
+#define COUNT_LEAST_USED_BUCKET_INDEX(iter)      ((iter) > 8*PRINT_ITERATION_INTERVAL)
+
 #define DIRECT_CAPACITY_BITSHIFT     38
 #define DIRECT_BUCKET_SIZE_BITSHIFT  13
 
@@ -54,7 +56,10 @@ static unsigned get_random_unit_bucket_index(struct block_state *state)
     assert(false);
 }
 
-static void print_state(struct block_state *state, unsigned long least_used_bucket_index)
+static void print_state(
+    struct block_state *state,
+    unsigned long least_used_bucket_index,
+    double avg_least_used_bucket_index)
 {
     unsigned long i;
 
@@ -88,6 +93,7 @@ static void print_state(struct block_state *state, unsigned long least_used_buck
            free_in_least_used_bucket,
            PERCENTAGE_DIV(free_in_least_used_bucket, UNITS_IN_BLOCK),
            state->blocks_by_used[least_used_bucket_index], least_used_bucket_index);
+    printf("Average most-free-block so far: %g\n", UNITS_IN_BLOCK - avg_least_used_bucket_index);
 }
 
 static unsigned long compute_least_used(struct block_state *state)
@@ -120,10 +126,19 @@ int main()
     /*        PERCENTAGE_DIV(SPARE_PHYSICAL_IN_BLOCKS, USED_PHYSICAL_IN_BLOCKS)); */
 
     srandom(0);
-    unsigned iter;
+    unsigned long total_least_used_bucket_index = 0;
+    unsigned long used_bucket_index_sample_count = 0;
+
+    unsigned long iter;
     for(iter = 0; ITER_STOP(iter); iter++) {
+        unsigned least_used_bucket_index = compute_least_used(&state);
+        if(COUNT_LEAST_USED_BUCKET_INDEX(iter)) {
+            used_bucket_index_sample_count++;
+            total_least_used_bucket_index += least_used_bucket_index;
+        }
         if(0 == iter % PRINT_ITERATION_INTERVAL) {
-            print_state(&state, compute_least_used(&state));
+            print_state(&state, least_used_bucket_index,
+                        total_least_used_bucket_index * 1.0 / used_bucket_index_sample_count);
         }
 
         unsigned smallest_size;
