@@ -54,7 +54,7 @@ static unsigned get_random_unit_bucket_index(struct block_state *state)
     assert(false);
 }
 
-static void print_state(struct block_state *state)
+static void print_state(struct block_state *state, unsigned long least_used_bucket_index)
 {
     unsigned long i;
 
@@ -83,14 +83,22 @@ static void print_state(struct block_state *state)
     }
     printf("\n");
 
+    unsigned long free_in_least_used_bucket = UNITS_IN_BLOCK - least_used_bucket_index;
+    printf("Most-free-block has %lu(%lu%%) free (%u blocks of that usage) (%lu used)\n",
+           free_in_least_used_bucket,
+           PERCENTAGE_DIV(free_in_least_used_bucket, UNITS_IN_BLOCK),
+           state->blocks_by_used[least_used_bucket_index], least_used_bucket_index);
+}
+
+static unsigned long compute_least_used(struct block_state *state)
+{
+    unsigned long i;
     for(i = 0; i <= UNITS_IN_BLOCK; i++) {
         if(state->blocks_by_used[i] > 0) {
-            printf("Most-free-block has %lu(%lu%%) free (%u blocks of that usage) (%lu used)\n",
-                   UNITS_IN_BLOCK-i, PERCENTAGE_DIV(UNITS_IN_BLOCK-i, UNITS_IN_BLOCK),
-                   state->blocks_by_used[i], i);
-            break;
+            return i;
         }
     }
+    assert(0); // no buckets exist!
 }
 
 int main()
@@ -114,7 +122,9 @@ int main()
     srandom(0);
     unsigned iter;
     for(iter = 0; ITER_STOP(iter); iter++) {
-        if(0 == iter % PRINT_ITERATION_INTERVAL) print_state(&state);
+        if(0 == iter % PRINT_ITERATION_INTERVAL) {
+            print_state(&state, compute_least_used(&state));
+        }
 
         unsigned smallest_size;
         for(smallest_size = 0; ; smallest_size++) {
