@@ -18,7 +18,7 @@
 
 #define DIRECT_BUCKET_COUNT_BITSHIFT (DIRECT_CAPACITY_BITSHIFT - DIRECT_BUCKET_SIZE_BITSHIFT)
 
-#define AVG_SPARE_IN_BLOCK       1.09375
+#define AVG_SPARE_IN_BLOCK       0.75
 #define UNITS_IN_BLOCK           8lu
 
 #define PHYSICAL_BLOCKS          (1lu << DIRECT_BUCKET_COUNT_BITSHIFT) /* total */
@@ -26,10 +26,11 @@
 #define USED_PHYSICAL_IN_BLOCKS  (PHYSICAL_BLOCKS - SPARE_PHYSICAL_IN_BLOCKS)
 #define USED_UNITS               (UNITS_IN_BLOCK * USED_PHYSICAL_IN_BLOCKS)
 
-#define INITIAL_BLOCKS_BY_USED                          \
-    {                                                   \
-        [UNITS_IN_BLOCK-1] = PHYSICAL_BLOCKS*(2-AVG_SPARE_IN_BLOCK), \
-        [UNITS_IN_BLOCK-2] = PHYSICAL_BLOCKS*(AVG_SPARE_IN_BLOCK-1), \
+#define INITIAL_BLOCKS_BY_USED                                          \
+    {                                                                   \
+        [UNITS_IN_BLOCK] = PHYSICAL_BLOCKS*(1-AVG_SPARE_IN_BLOCK),      \
+        [UNITS_IN_BLOCK-1] = PHYSICAL_BLOCKS*AVG_SPARE_IN_BLOCK,    \
+        /*[UNITS_IN_BLOCK-2] = PHYSICAL_BLOCKS*(AVG_SPARE_IN_BLOCK-1),*/ \
     }
 
 
